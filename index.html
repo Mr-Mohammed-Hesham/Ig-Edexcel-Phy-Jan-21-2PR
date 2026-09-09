@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IGCSE Physics Interactive Exam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .correct { background-color: #dcfce7 !important; border-color: #16a34a !important; }
+        .incorrect { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
+        .formula { font-family: 'Times New Roman', serif; letter-spacing: 0.5px; direction: ltr; display: inline-block; font-style: italic; }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen p-4">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 border-4 border-blue-500">
+            <h1 class="text-3xl font-bold text-center text-blue-900 mb-2">IGCSE Physics Interactive Exam</h1>
+            <p class="text-center text-gray-600">Pearson Edexcel International GCSE (9-1)</p>
+            <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div class="bg-blue-50 p-2 rounded text-center">
+                    <div class="font-bold">الاسم:</div>
+                    <input type="text" id="studentName" class="w-full border-b border-blue-300 bg-transparent text-center">
+                </div>
+                <div class="bg-blue-50 p-2 rounded text-center">
+                    <div class="font-bold">الشعبة:</div>
+                    <input type="text" id="studentClass" class="w-full border-b border-blue-300 bg-transparent text-center">
+                </div>
+                <div class="bg-blue-50 p-2 rounded text-center">
+                    <div class="font-bold">التاريخ:</div>
+                    <input type="text" id="examDate" class="w-full border-b border-blue-300 bg-transparent text-center">
+                </div>
+                <div class="bg-blue-50 p-2 rounded text-center">
+                    <div class="font-bold">المدة:</div>
+                    <div>75 دقيقة</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions Container -->
+        <div id="questionsContainer" class="space-y-6"></div>
+
+        <!-- Submit Button -->
+        <div class="text-center mt-8 no-print">
+            <button onclick="submitExam()" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition">
+                تسليم الامتحان
+            </button>
+        </div>
+
+        <!-- Results Panel -->
+        <div id="resultsPanel" class="hidden mt-8 bg-white rounded-2xl shadow-xl p-6 border-4 border-green-500">
+            <h2 class="text-3xl font-bold text-center text-green-900 mb-6">نتائج الامتحان</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-blue-50 p-4 rounded-xl text-center">
+                    <div class="font-bold">الاسم</div>
+                    <div id="resultName" class="text-xl font-bold text-blue-700"></div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-xl text-center">
+                    <div class="font-bold">الدرجة</div>
+                    <div id="resultScore" class="text-3xl font-bold text-green-700"></div>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-xl text-center">
+                    <div class="font-bold">النسبة المئوية</div>
+                    <div id="resultPercentage" class="text-3xl font-bold text-purple-700"></div>
+                </div>
+            </div>
+            <div id="detailedResults" class="space-y-4"></div>
+            <div class="text-center mt-6">
+                <button onclick="window.print()" class="bg-gray-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-gray-700 transition">
+                    طباعة النتائج
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                id: 1,
+                question: "أي جزء من الرسم البياني يوضح عندما تكون المادة في حالة انصهار؟",
+                options: ["PQ", "QR", "RS", "ST"],
+                correct: 1,
+                marks: 1
+            },
+            {
+                id: 2,
+                question: "أي جزء من الرسم البياني يوضح عندما تكون كل المادة في الحالة الصلبة؟",
+                options: ["PQ", "QR", "RS", "ST"],
+                correct: 0,
+                marks: 1
+            },
+            {
+                id: 3,
+                question: "أي من هذه العبارات تصف بشكل أفضل حركة الجزيئات في الغاز؟",
+                options: [
+                    "تهتز حول نقاط ثابتة",
+                    "تكون ساكنة",
+                    "تنزلق فوق بعضها البعض",
+                    "تتحرك بسرعة وبشكل عشوائي"
+                ],
+                correct: 3,
+                marks: 1
+            },
+            {
+                id: 4,
+                question: "سمِّ قطعة جهاز يمكن استخدامها لقياس درجة حرارة المادة.",
+                options: ["الميزان", "الترمومتر", "المسطرة", "الساعة"],
+                correct: 1,
+                marks: 1
+            },
+            {
+                id: 5,
+                question: "كتلة المادة 1.2 kg. احسب الطاقة اللازمة لرفع درجة حرارة المادة من 10°C إلى 37°C. [السعة الحرارية النوعية = 840 J/kg°C]",
+                options: ["27,216 J", "27,216 kJ", "2,721.6 J", "272.16 J"],
+                correct: 0,
+                marks: 3,
+                calculation: "Q = m × c × ΔT = 1.2 × 840 × 27 = 27,216 J"
+            },
+            {
+                id: 6,
+                question: "وزن الكتلة المعدنية يؤثر عبر النقطة G. أعطِ اسم النقطة G.",
+                options: ["مركز الكتلة", "نقطة الارتكاز", "مركز الجاذبية", "نقطة التوازن"],
+                correct: 2,
+                marks: 1
+            },
+            {
+                id: 7,
+                question: "سمِّ قطعة جهاز يمكن استخدامها لقياس وزن الكتلة المعدنية.",
+                options: ["الميزان الزنبركي", "الميزان الكهربائي", "المسطرة", "الترمومتر"],
+                correct: 0,
+                marks: 1
+            },
+            {
+                id: 8,
+                question: "اذكر الصيغة التي تربط العزم (moment)، القوة، والمسافة العمودية من نقطة الارتكاز.",
+                options: [
+                    "العزم = القوة × المسافة",
+                    "العزم = القوة ÷ المسافة",
+                    "العزم = القوة + المسافة",
+                    "العزم = القوة - المسافة"
+                ],
+                correct: 0,
+                marks: 1
+            },
+            {
+                id: 9,
+                question: "وزن الكتلة المعدنية هو 0.68 N. بيّن أن عزم وزن الكتلة المعدنية حول النقطة P هو تقريباً 2.9 N cm.",
+                options: ["2.9 N cm", "2.9 N m", "29 N cm", "0.29 N cm"],
+                correct: 0,
+                marks: 1,
+                calculation: "Moment = Force × distance = 0.68 × 4.3 ≈ 2.9 N cm"
+            },
+            {
+                id: 10,
+                question: "تُطبَّق القوة F على الكتلة المعدنية لمنعها من الحركة. احسب مقدار القوة F.",
+                options: ["0.68 N", "0.34 N", "1.36 N", "0.17 N"],
+                correct: 0,
+                marks: 3
+            },
+            {
+                id: 11,
+                question: "اشرح اتجاه القوة المؤثرة على المغناطيس A من المغناطيس B.",
+                options: [
+                    "قوة تنافر لأن الأقطاب المتشابهة تتنافر",
+                    "قوة تجاذب لأن الأقطاب المختلفة تتجاذب",
+                    "لا توجد قوة",
+                    "قوة عمودية على الخط الواصل بينهما"
+                ],
+                correct: 0,
+                marks: 2
+            },
+            {
+                id: 12,
+                question: "قبل التصادم، زخم المنزلق A هو 0.045 kg m/s لليمين والمنزلق B في حالة سكون. اذكر الزخم الكلي للمنزلق A والمنزلق B بعد التصادم.",
+                options: ["0.045 kg m/s", "0 kg m/s", "0.090 kg m/s", "0.0225 kg m/s"],
+                correct: 0,
+                marks: 1
+            },
+            {
+                id: 13,
+                question: "بعد التصادم، زخم المنزلق A هو 0.021 kg m/s لليسار. احسب زخم المنزلق B بعد التصادم.",
+                options: ["0.066 kg m/s", "0.024 kg m/s", "0.045 kg m/s", "0.021 kg m/s"],
+                correct: 0,
+                marks: 2,
+                calculation: "Total momentum = 0.045 = -0.021 + pB, so pB = 0.066 kg m/s"
+            },
+            {
+                id: 14,
+                question: "الزمن اللازم لتغير زخم المنزلق B هو 0.19 ثانية. احسب متوسط القوة على المنزلق B.",
+                options: ["0.347 N", "0.111 N", "0.389 N", "0.237 N"],
+                correct: 0,
+                marks: 2,
+                calculation: "F = Δp/t = 0.066/0.19 ≈ 0.347 N"
+            },
+            {
+                id: 15,
+                question: "اذكر الصيغة التي تربط السرعة، التردد، والطول الموجي للموجة.",
+                options: [
+                    "السرعة = التردد × الطول الموجي",
+                    "السرعة = التردد ÷ الطول الموجي",
+                    "السرعة = الطول الموجي  التردد",
+                    "السرعة = التردد + الطول الموجي"
+                ],
+                correct: 0,
+                marks: 1
+            },
+            {
+                id: 16,
+                question: "الطالب يجد أن الطول الموجي هو 1.4 m. إذا كان التردد 250 Hz، احسب سرعة الموجة.",
+                options: ["350 m/s", "178.6 m/s", "3500 m/s", "17.86 m/s"],
+                correct: 0,
+                marks: 3,
+                calculation: "v = f × λ = 250 × 1.4 = 350 m/s"
+            },
+            {
+                id: 17,
+                question: "الطائرة تبدأ من السكون ولها تسارع ثابت مقداره 4.1 m/s². احسب المسافة المطلوبة للوصول إلى سرعة الإقلاع 75 m/s.",
+                options: ["686 m", "9.1 m", "307.5 m", "18.3 m"],
+                correct: 0,
+                marks: 3,
+                calculation: "v² = u² + 2as, 75² = 0 + 2(4.1)s, s = 5625/8.2 ≈ 686 m"
+            },
+            {
+                id: 18,
+                question: "اشرح ما المقصود بإشعاع الخلفية.",
+                options: [
+                    "الإشعاع الموجود دائماً في البيئة من مصادر طبيعية وصناعية",
+                    "الإشعاع من الشمس فقط",
+                    "الإشعاع من المفاعلات النووية فقط",
+                    "الإشعاع من الأجهزة الطبية فقط"
+                ],
+                correct: 0,
+                marks: 2
+            },
+            {
+                id: 19,
+                question: "اشرح كيف يدعم إشعاع الخلفية الكوني الميكروي (CMBR) نظرية الانفجار العظيم.",
+                options: [
+                    "يُظهر أن الكون كان ساخناً وكثيفاً في الماضي",
+                    "يُظهر أن الكون ثابت",
+                    "يُظهر أن الكون يتقلص",
+                    "لا علاقة له بنظرية الانفجار العظيم"
+                ],
+                correct: 0,
+                marks: 2
+            },
+            {
+                id: 20,
+                question: "غاز الهيدروجين في مختبر على الأرض يبعث ضوءاً بطول موجي 605 nm. الطول الموجي للضوء من المجرة البعيدة يُقاس بـ 683 nm. احسب سرعة المجرة البعيدة. [سرعة الضوء = 3.0 × 10⁸ m/s]",
+                options: ["3.87 × 10⁷ m/s", "3.87 × 10⁶ m/s", "3.87 × 10⁸ m/s", "3.87 × 10⁵ m/s"],
+                correct: 0,
+                marks: 4,
+                calculation: "v/c = Δλ/λ₀, v = (78/605) × 3.0×10⁸ ≈ 3.87 × 10⁷ m/s"
+            },
+            {
+                id: 21,
+                question: "قطرات ماء سالبة الشحنة تسقط في الدلو A. صف كيف يصبح الدلو A سالب الشحنة.",
+                options: [
+                    "تنتقل الإلكترونات من القطرات إلى الدلو",
+                    "تنتقل البروتونات من القطرات إلى الدلو",
+                    "تنتقل النيوترونات من القطرات إلى الدلو",
+                    "لا تنتقل أي شحنات"
+                ],
+                correct: 0,
+                marks: 2
+            },
+            {
+                id: 22,
+                question: "اشرح لماذا تنتشر القطرات سالبة الشحنة أثناء سقوطها.",
+                options: [
+                    "لأن الشحنات المتشابهة تتنافر",
+                    "لأن الشحنات المختلفة تتجاذب",
+                    "بسبب الجاذبية فقط",
+                    "بسبب الاحتكاك مع الهواء"
+                ],
+                correct: 0,
+                marks: 2
+            },
+            {
+                id: 23,
+                question: "قطرة تصطدم بالدلو A بسرعة 3.8 m/s. احسب الطاقة الحركية للقطرة. [كتلة القطرة = 6.2 × 10⁻⁹ kg]",
+                options: ["4.48 × 10⁻⁸ J", "1.18 × 10⁻⁸ J", "2.36 × 10⁻⁸ J", "4.48 × 10⁻⁹ J"],
+                correct: 0,
+                marks: 3,
+                calculation: "KE = ½mv² = ½ × 6.2×10⁻⁹ × (3.8)² ≈ 4.48 × 10⁻⁸ J"
+            },
+            {
+                id: 24,
+                question: "الشحنة الكلية المخزنة في الدلو A هي -1.1 × 10⁻¹⁰ C. هذه الشحنة تمر عبر الهواء في 9.2 × 10⁻³ s. احسب متوسط التيار بين الدلاء.",
+                options: ["1.20 × 10⁻ A", "1.20 × 10⁻⁷ A", "1.20 × 10⁻⁹ A", "1.20 × 10⁻⁶ A"],
+                correct: 0,
+                marks: 3,
+                calculation: "I = Q/t = 1.1×10⁻¹⁰/9.2×10⁻³ ≈ 1.20 × 10⁸ A"
+            },
+            {
+                id: 25,
+                question: "الشرارة تنقل شحنة مقدارها -1.1 × 10⁻¹⁰ C. متوسط الجهد بين الدلاء هو 1.7 kV. احسب الطاقة المنقولة بالشرارة.",
+                options: ["1.87 × 10⁻⁷ J", "1.87 × 10⁻⁶ J", "1.87 × 10⁻⁸ J", "1.87 × 10⁻⁹ J"],
+                correct: 0,
+                marks: 3,
+                calculation: "E = Q × V = 1.1×10⁻¹⁰ × 1700 ≈ 1.87 × 10⁻ J"
+            },
+            {
+                id: 26,
+                question: "اشرح عملية عمل المحول الخافض للجهد.",
+                options: [
+                    "التيار المتردد في الملف الابتدائي يخلق مجالاً مغناطيسياً متغيراً يحث جهداً في الملف الثانوي",
+                    "التيار المستمر في الملف الابتدائي يخلق مجالاً مغناطيسياً ثابتاً",
+                    "لا يوجد نقل للطاقة بين الملفين",
+                    "الملف الثانوي له لفات أكثر من الابتدائي"
+                ],
+                correct: 0,
+                marks: 4
+            },
+            {
+                id: 27,
+                question: "اذكر الصيغة التي تربط جهد الدخل، جهد الخرج، ونسبة اللفات في المحول.",
+                options: [
+                    "Vp/Vs = Np/Ns",
+                    "Vp/Vs = Ns/Np",
+                    "Vp × Vs = Np × Ns",
+                    "Vp + Vs = Np + Ns"
+                ],
+                correct: 0,
+                marks: 1
+            },
+            {
+                id: 28,
+                question: "الملف الابتدائي: 160 لفة، الملف الثانوي: 45 لفة، الجهد الابتدائي: 12 V. احسب جهد الخرج للمحول.",
+                options: ["3.375 V", "42.67 V", "33.75 V", "0.3375 V"],
+                correct: 0,
+                marks: 3,
+                calculation: "Vs = Vp × (Ns/Np) = 12 × (45/160) = 3.375 V"
+            }
+        ];
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = questions.map((q, index) => `
+                <div class="bg-white rounded-xl shadow-lg p-6 border-2 border-gray-200" id="question-${q.id}">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 flex-1">
+                            السؤال ${index + 1}: ${q.question}
+                        </h3>
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold mr-4">
+                            ${q.marks} ${q.marks === 1 ? 'درجة' : 'درجات'}
+                        </span>
+                    </div>
+                    <div class="space-y-3">
+                        ${q.options.map((option, optIndex) => `
+                            <label class="flex items-center p-3 rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition">
+                                <input type="radio" name="q${q.id}" value="${optIndex}" class="w-5 h-5 text-blue-600 mr-3">
+                                <span class="text-gray-700">${option}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    ${q.calculation ? `
+                        <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <div class="font-bold text-yellow-800">طريقة الحل:</div>
+                            <div class="text-yellow-700 formula mt-1">${q.calculation}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function submitExam() {
+            let totalScore = 0;
+            let maxScore = 0;
+            const results = [];
+
+            questions.forEach(q => {
+                const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
+                maxScore += q.marks;
+                
+                if (selected) {
+                    const selectedValue = parseInt(selected.value);
+                    if (selectedValue === q.correct) {
+                        totalScore += q.marks;
+                        results.push({
+                            id: q.id,
+                            correct: true,
+                            marks: q.marks
+                        });
+                        document.getElementById(`question-${q.id}`).classList.add('correct');
+                    } else {
+                        results.push({
+                            id: q.id,
+                            correct: false,
+                            marks: 0,
+                            selectedAnswer: q.options[selectedValue],
+                            correctAnswer: q.options[q.correct]
+                        });
+                        document.getElementById(`question-${q.id}`).classList.add('incorrect');
+                    }
+                } else {
+                    results.push({
+                        id: q.id,
+                        correct: false,
+                        marks: 0,
+                        selectedAnswer: 'لم يتم الإجابة',
+                        correctAnswer: q.options[q.correct]
+                    });
+                    document.getElementById(`question-${q.id}`).classList.add('incorrect');
+                }
+            });
+
+            const percentage = Math.round((totalScore / maxScore) * 100);
+            
+            document.getElementById('resultName').textContent = document.getElementById('studentName').value || 'غير محدد';
+            document.getElementById('resultScore').textContent = `${totalScore} / ${maxScore}`;
+            document.getElementById('resultPercentage').textContent = `${percentage}%`;
+
+            const detailedResults = document.getElementById('detailedResults');
+            detailedResults.innerHTML = `
+                <h3 class="text-2xl font-bold mb-4">التفاصيل:</h3>
+                <div class="space-y-3">
+                    ${results.map(r => `
+                        <div class="p-4 rounded-lg ${r.correct ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'}">
+                            <div class="font-bold mb-2">السؤال ${r.id}: ${r.correct ? '✓ صحيح' : '✗ خطأ'}</div>
+                            ${!r.correct ? `
+                                <div class="text-sm">
+                                    <div>إجابتك: ${r.selectedAnswer}</div>
+                                    <div class="text-green-700 font-bold">الإجابة الصحيحة: ${r.correctAnswer}</div>
+                                </div>
+                            ` : ''}
+                            <div class="text-sm font-bold mt-2">الدرجة: ${r.marks}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            document.getElementById('resultsPanel').classList.remove('hidden');
+            document.getElementById('resultsPanel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize
+        renderQuestions();
+    </script>
+</body>
+</html>
