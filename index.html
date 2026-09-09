@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IGCSE Physics Interactive Exam</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
         .correct { background-color: #dcfce7 !important; border-color: #16a34a !important; }
         .incorrect { background-color: #fee2e2 !important; border-color: #dc2626 !important; }
         .formula { font-family: 'Times New Roman', serif; letter-spacing: 0.5px; direction: ltr; display: inline-block; font-style: italic; }
+        .diagram-container { text-align: center; margin: 15px 0; background: #f9fafb; padding: 15px; border-radius: 8px; }
+        .svg-diagram { max-width: 100%; height: auto; border: 1px solid #e5e7eb; border-radius: 8px; }
         @media print { .no-print { display: none !important; } }
     </style>
 </head>
@@ -47,7 +50,7 @@
         <!-- Submit Button -->
         <div class="text-center mt-8 no-print">
             <button onclick="submitExam()" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-xl hover:scale-105 transition">
-                تسليم الامتحان
+                التسليم الامتحان
             </button>
         </div>
 
@@ -78,10 +81,226 @@
     </div>
 
     <script>
+        // Initialize EmailJS
+        emailjs.init("Rb3Lq8tXaFmc5YHUH");
+
+        // SVG Diagrams
+        const diagrams = {
+            hrDiagram: `<svg class="svg-diagram" width="400" height="300" viewBox="0 0 400 300">
+                <rect x="0" y="0" width="400" height="300" fill="white"/>
+                <text x="200" y="20" text-anchor="middle" font-size="14" font-weight="bold">Hertzsprung-Russell Diagram</text>
+                <line x1="50" y1="250" x2="350" y2="250" stroke="black" stroke-width="2"/>
+                <line x1="50" y1="250" x2="50" y2="50" stroke="black" stroke-width="2"/>
+                <text x="200" y="280" text-anchor="middle" font-size="12">Temperature (K) →</text>
+                <text x="20" y="150" text-anchor="middle" font-size="12" transform="rotate(-90, 20, 150)">Absolute Magnitude ↑</text>
+                <text x="320" y="265" font-size="10">3000</text>
+                <text x="200" y="265" font-size="10">6000</text>
+                <text x="80" y="265" font-size="10">10000</text>
+                <text x="35" y="240" font-size="10">+10</text>
+                <text x="35" y="150" font-size="10">0</text>
+                <text x="35" y="60" font-size="10">-10</text>
+                <path d="M 80 70 Q 150 100 200 150 Q 250 200 320 240" stroke="#dc2626" stroke-width="3" fill="none"/>
+                <ellipse cx="90" cy="80" rx="30" ry="20" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <text x="90" y="85" text-anchor="middle" font-size="10" font-weight="bold">RG</text>
+                <ellipse cx="310" cy="230" rx="25" ry="15" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                <text x="310" y="235" text-anchor="middle" font-size="10" font-weight="bold">WD</text>
+                <rect x="150" y="120" width="100" height="60" fill="#fee2e2" stroke="#dc2626" stroke-width="2" opacity="0.5"/>
+                <text x="200" y="155" text-anchor="middle" font-size="10" font-weight="bold">Main Sequence</text>
+            </svg>`,
+            
+            soundWave: `<svg class="svg-diagram" width="400" height="250" viewBox="0 0 400 250">
+                <rect x="0" y="0" width="400" height="250" fill="white"/>
+                <text x="200" y="20" text-anchor="middle" font-size="14" font-weight="bold">Sound Wave Experiment</text>
+                <rect x="50" y="150" width="80" height="60" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                <text x="90" y="185" text-anchor="middle" font-size="12">Student A</text>
+                <rect x="270" y="150" width="80" height="60" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+                <text x="310" y="185" text-anchor="middle" font-size="12">Student B</text>
+                <rect x="180" y="100" width="40" height="110" fill="#f3f4f6" stroke="#6b7280" stroke-width="2"/>
+                <text x="200" y="165" text-anchor="middle" font-size="10">Wall</text>
+                <path d="M 130 180 Q 165 160 200 180" stroke="#dc2626" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <path d="M 200 180 Q 235 160 270 180" stroke="#dc2626" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+                <text x="200" y="140" text-anchor="middle" font-size="10" fill="#dc2626">Sound wave</text>
+                <text x="90" y="220" text-anchor="middle" font-size="10">120 m</text>
+                <text x="310" y="220" text-anchor="middle" font-size="10">210 m</text>
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+                    </marker>
+                </defs>
+            </svg>`,
+            
+            antenna: `<svg class="svg-diagram" width="400" height="300" viewBox="0 0 400 300">
+                <rect x="0" y="0" width="400" height="300" fill="white"/>
+                <text x="200" y="20" text-anchor="middle" font-size="14" font-weight="bold">Radio Antenna</text>
+                <rect x="170" y="80" width="60" height="180" fill="#f3f4f6" stroke="#6b7280" stroke-width="3"/>
+                <text x="200" y="280" text-anchor="middle" font-size="12">Metal Mast</text>
+                <rect x="165" y="80" width="70" height="20" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <text x="200" y="95" text-anchor="middle" font-size="10">Plastic Tube</text>
+                <line x1="200" y1="60" x2="200" y2="80" stroke="#3b82f6" stroke-width="2"/>
+                <text x="200" y="50" text-anchor="middle" font-size="10">Antenna</text>
+                <line x1="200" y1="260" x2="200" y2="280" stroke="#16a34a" stroke-width="2"/>
+                <line x1="180" y1="280" x2="220" y2="280" stroke="#16a34a" stroke-width="2"/>
+                <text x="200" y="295" text-anchor="middle" font-size="9" fill="#16a34a">Earth Wire</text>
+                <circle cx="150" cy="150" r="3" fill="#dc2626"/>
+                <circle cx="160" cy="140" r="3" fill="#dc2626"/>
+                <circle cx="155" cy="160" r="3" fill="#dc2626"/>
+                <text x="130" y="130" font-size="10" fill="#dc2626">Dust (+)</text>
+            </svg>`,
+            
+            oscilloscope: `<svg class="svg-diagram" width="400" height="200" viewBox="0 0 400 200">
+                <rect x="0" y="0" width="400" height="200" fill="white"/>
+                <text x="200" y="15" text-anchor="middle" font-size="12" font-weight="bold">Oscilloscope Trace</text>
+                <rect x="50" y="30" width="300" height="140" fill="#f9fafb" stroke="#374151" stroke-width="2"/>
+                <line x1="50" y1="100" x2="350" y2="100" stroke="#9ca3af" stroke-width="1"/>
+                <line x1="200" y1="30" x2="200" y2="170" stroke="#9ca3af" stroke-width="1"/>
+                <path d="M 50 100 L 80 60 L 140 140 L 200 60 L 260 140 L 320 60 L 350 100" stroke="#2563eb" stroke-width="2" fill="none"/>
+                <text x="200" y="190" text-anchor="middle" font-size="10">X: 1 square = 0.01 ms</text>
+                <text x="380" y="100" text-anchor="middle" font-size="10" transform="rotate(-90, 380, 100)">Y: 1 square = 5 V</text>
+                <line x1="80" y1="60" x2="80" y2="100" stroke="#dc2626" stroke-width="1" stroke-dasharray="3"/>
+                <text x="85" y="80" font-size="9" fill="#dc2626">Amplitude</text>
+            </svg>`,
+            
+            loudspeaker: `<svg class="svg-diagram" width="400" height="280" viewBox="0 0 400 280">
+                <rect x="0" y="0" width="400" height="280" fill="white"/>
+                <text x="200" y="15" text-anchor="middle" font-size="12" font-weight="bold">Loudspeaker Model</text>
+                <rect x="100" y="40" width="200" height="80" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <text x="200" y="60" text-anchor="middle" font-size="11">Cardboard Tube</text>
+                <path d="M 120 80 L 120 100 Q 200 110 280 100 L 280 80" stroke="#3b82f6" stroke-width="3" fill="none"/>
+                <text x="200" y="95" text-anchor="middle" font-size="10">Coil</text>
+                <rect x="150" y="120" width="100" height="8" fill="#d1d5db" stroke="#6b7280" stroke-width="1"/>
+                <text x="200" y="140" text-anchor="middle" font-size="10">Card</text>
+                <line x1="120" y1="124" x2="100" y2="124" stroke="#6b7280" stroke-width="2"/>
+                <line x1="280" y1="124" x2="300" y2="124" stroke="#6b7280" stroke-width="2"/>
+                <text x="100" y="120" font-size="9">Clamped</text>
+                <text x="280" y="120" font-size="9">Clamped</text>
+                <rect x="170" y="160" width="60" height="40" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+                <text x="200" y="185" text-anchor="middle" font-size="10">Bar Magnet</text>
+                <text x="200" y="175" text-anchor="middle" font-size="12" font-weight="bold">N S</text>
+                <line x1="200" y1="200" x2="200" y2="220" stroke="#16a34a" stroke-width="1" stroke-dasharray="3"/>
+                <text x="200" y="235" text-anchor="middle" font-size="9" fill="#16a34a">AC Supply</text>
+            </svg>`,
+            
+            heatingApparatus: `<svg class="svg-diagram" width="400" height="300" viewBox="0 0 400 300">
+                <rect x="0" y="0" width="400" height="300" fill="white"/>
+                <text x="200" y="15" text-anchor="middle" font-size="12" font-weight="bold">Heating Apparatus</text>
+                <rect x="100" y="80" width="200" height="180" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                <rect x="110" y="90" width="180" height="160" fill="#ecfeff" stroke="#06b6d4" stroke-width="1"/>
+                <text x="200" y="180" text-anchor="middle" font-size="11">Solid Substance</text>
+                <rect x="160" y="100" width="80" height="20" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <text x="200" y="115" text-anchor="middle" font-size="9">Heater</text>
+                <line x1="200" y1="100" x2="200" y2="80" stroke="#6b7280" stroke-width="2"/>
+                <circle cx="200" cy="70" r="5" fill="#dc2626"/>
+                <text x="220" y="75" font-size="9">Thermometer</text>
+                <rect x="100" y="80" width="200" height="10" fill="#d1d5db" stroke="#6b7280" stroke-width="1"/>
+                <text x="200" y="75" text-anchor="middle" font-size="9">Lid</text>
+                <rect x="80" y="260" width="240" height="20" fill="#f3f4f6" stroke="#6b7280" stroke-width="1"/>
+                <text x="200" y="275" text-anchor="middle" font-size="9">Insulating Material</text>
+                <line x1="160" y1="120" x2="160" y2="60" stroke="#16a34a" stroke-width="1"/>
+                <line x1="240" y1="120" x2="240" y2="60" stroke="#16a34a" stroke-width="1"/>
+                <text x="200" y="55" text-anchor="middle" font-size="9" fill="#16a34a">12V Supply</text>
+            </svg>`,
+            
+            temperatureGraph: `<svg class="svg-diagram" width="400" height="250" viewBox="0 0 400 250">
+                <rect x="0" y="0" width="400" height="250" fill="white"/>
+                <text x="200" y="15" text-anchor="middle" font-size="12" font-weight="bold">Temperature vs Time</text>
+                <line x1="60" y1="200" x2="380" y2="200" stroke="#374151" stroke-width="2"/>
+                <line x1="60" y1="200" x2="60" y2="30" stroke="#374151" stroke-width="2"/>
+                <text x="220" y="230" text-anchor="middle" font-size="11">Time →</text>
+                <text x="25" y="115" text-anchor="middle" font-size="10" transform="rotate(-90, 25, 115)">Temperature (°C)</text>
+                <path d="M 60 180 L 120 120 L 240 120 L 340 60" stroke="#dc2626" stroke-width="3" fill="none"/>
+                <text x="40" y="195" font-size="9">0</text>
+                <text x="40" y="165" font-size="9">10</text>
+                <text x="40" y="135" font-size="9">20</text>
+                <text x="40" y="105" font-size="9">30</text>
+                <text x="40" y="75" font-size="9">40</text>
+                <text x="40" y="45" font-size="9">50</text>
+                <text x="60" y="215" font-size="9">0</text>
+                <text x="140" y="215" font-size="9">2</text>
+                <text x="220" y="215" font-size="9">4</text>
+                <text x="300" y="215" font-size="9">6</text>
+                <text x="180" y="110" text-anchor="middle" font-size="10" fill="#dc2626" font-weight="bold">Melting</text>
+            </svg>`,
+            
+            fusionStation: `<svg class="svg-diagram" width="400" height="280" viewBox="0 0 400 280">
+                <rect x="0" y="0" width="400" height="280" fill="white"/>
+                <text x="200" y="15" text-anchor="middle" font-size="12" font-weight="bold">Fusion Power Station</text>
+                <rect x="50" y="80" width="100" height="80" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <text x="100" y="125" text-anchor="middle" font-size="10">Fusion</text>
+                <text x="100" y="140" text-anchor="middle" font-size="10">Station</text>
+                <rect x="200" y="70" width="80" height="100" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                <text x="240" y="125" text-anchor="middle" font-size="10">Step-up</text>
+                <text x="240" y="140" text-anchor="middle" font-size="10">Transformer</text>
+                <line x1="150" y1="120" x2="200" y2="120" stroke="#dc2626" stroke-width="2"/>
+                <text x="175" y="115" font-size="8">28 kA</text>
+                <text x="175" y="135" font-size="8">21 kV</text>
+                <line x1="280" y1="120" x2="350" y2="120" stroke="#16a34a" stroke-width="2"/>
+                <text x="315" y="115" font-size="8">330 kV</text>
+                <polygon points="350,120 340,115 340,125" fill="#16a34a"/>
+                <rect x="350" y="100" width="40" height="40" fill="#d1d5db" stroke="#6b7280" stroke-width="1"/>
+                <text x="370" y="125" text-anchor="middle" font-size="9">Grid</text>
+            </svg>`,
+            
+            blocksAndSpring: `<svg class="svg-diagram" width="400" height="250" viewBox="0 0 400 250">
+                <rect x="0" y="0" width="400" height="250" fill="white"/>
+                <text x="200" y="15" text-anchor="middle" font-size="12" font-weight="bold">Blocks and Spring</text>
+                <rect x="80" y="120" width="120" height="60" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+                <text x="140" y="155" text-anchor="middle" font-size="10">Large Block</text>
+                <text x="140" y="170" text-anchor="middle" font-size="9">75 g</text>
+                <rect x="240" y="130" width="60" height="40" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/>
+                <text x="270" y="155" text-anchor="middle" font-size="10">Small</text>
+                <text x="270" y="168" text-anchor="middle" font-size="9">17 g</text>
+                <path d="M 200 140 Q 210 130 220 140 Q 230 150 240 140" stroke="#dc2626" stroke-width="3" fill="none"/>
+                <text x="220" y="130" font-size="9" fill="#dc2626">Spring</text>
+                <circle cx="320" cy="150" r="5" fill="#16a34a"/>
+                <line x1="270" y1="150" x2="320" y2="150" stroke="#16a34a" stroke-width="2"/>
+                <text x="295" y="145" font-size="8">String</text>
+                <text x="320" y="165" text-anchor="middle" font-size="9">Fixed</text>
+                <text x="320" y="175" text-anchor="middle" font-size="9">Point</text>
+            </svg>`,
+            
+            hydraulicLift: `<svg class="svg-diagram" width="400" height="300" viewBox="0 0 400 300">
+                <rect x="0" y="0" width="400" height="300" fill="white"/>
+                <text x="200" y="15" text-anchor="middle" font-size="12" font-weight="bold">Hydraulic Lift</text>
+                <rect x="80" y="100" width="60" height="150" fill="#ecfeff" stroke="#06b6d4" stroke-width="2"/>
+                <rect x="260" y="80" width="80" height="170" fill="#ecfeff" stroke="#06b6d4" stroke-width="2"/>
+                <rect x="80" y="240" width="260" height="20" fill="#0ea5e9" stroke="#0284c7" stroke-width="2"/>
+                <text x="210" y="255" text-anchor="middle" font-size="10" fill="white">Oil</text>
+                <rect x="70" y="80" width="80" height="20" fill="#d1d5db" stroke="#6b7280" stroke-width="1"/>
+                <text x="110" y="95" text-anchor="middle" font-size="9">Piston X</text>
+                <rect x="250" y="60" width="100" height="20" fill="#d1d5db" stroke="#6b7280" stroke-width="1"/>
+                <text x="300" y="75" text-anchor="middle" font-size="9">Piston Y</text>
+                <rect x="95" y="65" width="30" height="15" fill="#fef3c7" stroke="#f59e0b" stroke-width="1"/>
+                <text x="110" y="77" text-anchor="middle" font-size="8">24 kg</text>
+                <line x1="140" y1="170" x2="260" y2="170" stroke="#374151" stroke-width="1" stroke-dasharray="3"/>
+                <text x="200" y="165" text-anchor="middle" font-size="8">57 cm</text>
+                <text x="110" y="275" text-anchor="middle" font-size="9">1.2 m²</text>
+                <text x="300" y="275" text-anchor="middle" font-size="9">4.8 m²</text>
+            </svg>`,
+            
+            refraction: `<svg class="svg-diagram" width="400" height="280" viewBox="0 0 400 280">
+                <rect x="0" y="0" width="400" height="280" fill="white"/>
+                <text x="200" y="15" text-anchor="middle" font-size="12" font-weight="bold">Light Refraction</text>
+                <rect x="100" y="60" width="200" height="200" fill="#ecfeff" stroke="#06b6d4" stroke-width="2"/>
+                <text x="200" y="275" text-anchor="middle" font-size="10">Transparent Material</text>
+                <line x1="60" y1="100" x2="100" y2="140" stroke="#dc2626" stroke-width="2"/>
+                <line x1="100" y1="140" x2="180" y2="180" stroke="#dc2626" stroke-width="2"/>
+                <line x1="180" y1="180" x2="180" y2="220" stroke="#dc2626" stroke-width="2"/>
+                <line x1="180" y1="220" x2="260" y2="180" stroke="#dc2626" stroke-width="2"/>
+                <line x1="100" y1="60" x2="100" y2="260" stroke="#374151" stroke-width="1" stroke-dasharray="3"/>
+                <line x1="180" y1="180" x2="180" y2="260" stroke="#374151" stroke-width="1" stroke-dasharray="3"/>
+                <text x="80" y="120" font-size="9">X</text>
+                <text x="160" y="200" font-size="9">Y</text>
+                <text x="240" y="160" font-size="9">Z</text>
+                <path d="M 105 145 Q 110 140 105 135" stroke="#16a34a" stroke-width="1" fill="none"/>
+                <text x="95" y="160" font-size="8" fill="#16a34a">64°</text>
+            </svg>`
+        };
+
         const questions = [
             {
                 id: 1,
                 question: "أي جزء من الرسم البياني يوضح عندما تكون المادة في حالة انصهار؟",
+                diagram: diagrams.hrDiagram,
                 options: ["PQ", "QR", "RS", "ST"],
                 correct: 1,
                 marks: 1
@@ -202,7 +421,7 @@
                 options: [
                     "السرعة = التردد × الطول الموجي",
                     "السرعة = التردد ÷ الطول الموجي",
-                    "السرعة = الطول الموجي  التردد",
+                    "السرعة = الطول الموجي / التردد",
                     "السرعة = التردد + الطول الموجي"
                 ],
                 correct: 0,
@@ -251,7 +470,7 @@
             {
                 id: 20,
                 question: "غاز الهيدروجين في مختبر على الأرض يبعث ضوءاً بطول موجي 605 nm. الطول الموجي للضوء من المجرة البعيدة يُقاس بـ 683 nm. احسب سرعة المجرة البعيدة. [سرعة الضوء = 3.0 × 10⁸ m/s]",
-                options: ["3.87 × 10⁷ m/s", "3.87 × 10⁶ m/s", "3.87 × 10⁸ m/s", "3.87 × 10⁵ m/s"],
+                options: ["3.87 × 10⁷ m/s", "3.87 × 10 m/s", "3.87 × 10⁸ m/s", "3.87 × 10⁵ m/s"],
                 correct: 0,
                 marks: 4,
                 calculation: "v/c = Δλ/λ₀, v = (78/605) × 3.0×10⁸ ≈ 3.87 × 10⁷ m/s"
@@ -283,7 +502,7 @@
             {
                 id: 23,
                 question: "قطرة تصطدم بالدلو A بسرعة 3.8 m/s. احسب الطاقة الحركية للقطرة. [كتلة القطرة = 6.2 × 10⁻⁹ kg]",
-                options: ["4.48 × 10⁻⁸ J", "1.18 × 10⁻⁸ J", "2.36 × 10⁻⁸ J", "4.48 × 10⁻⁹ J"],
+                options: ["4.48 × 10⁻⁸ J", "1.18 × 10⁻⁸ J", "2.36 × 10⁻ J", "4.48 × 10⁻⁹ J"],
                 correct: 0,
                 marks: 3,
                 calculation: "KE = ½mv² = ½ × 6.2×10⁻⁹ × (3.8)² ≈ 4.48 × 10⁻⁸ J"
@@ -291,10 +510,10 @@
             {
                 id: 24,
                 question: "الشحنة الكلية المخزنة في الدلو A هي -1.1 × 10⁻¹⁰ C. هذه الشحنة تمر عبر الهواء في 9.2 × 10⁻³ s. احسب متوسط التيار بين الدلاء.",
-                options: ["1.20 × 10⁻ A", "1.20 × 10⁻⁷ A", "1.20 × 10⁻⁹ A", "1.20 × 10⁻⁶ A"],
+                options: ["1.20 × 10⁻⁸ A", "1.20 × 10⁻⁷ A", "1.20 × 10⁻⁹ A", "1.20 × 10⁻⁶ A"],
                 correct: 0,
                 marks: 3,
-                calculation: "I = Q/t = 1.1×10⁻¹⁰/9.2×10⁻³ ≈ 1.20 × 10⁸ A"
+                calculation: "I = Q/t = 1.1×10¹⁰/9.2×10³ ≈ 1.20 × 10⁻⁸ A"
             },
             {
                 id: 25,
@@ -302,7 +521,7 @@
                 options: ["1.87 × 10⁻⁷ J", "1.87 × 10⁻⁶ J", "1.87 × 10⁻⁸ J", "1.87 × 10⁻⁹ J"],
                 correct: 0,
                 marks: 3,
-                calculation: "E = Q × V = 1.1×10⁻¹⁰ × 1700 ≈ 1.87 × 10⁻ J"
+                calculation: "E = Q × V = 1.1×10⁻¹⁰ × 1700 ≈ 1.87 × 10⁻⁷ J"
             },
             {
                 id: 26,
@@ -350,6 +569,7 @@
                             ${q.marks} ${q.marks === 1 ? 'درجة' : 'درجات'}
                         </span>
                     </div>
+                    ${q.diagram ? `<div class="diagram-container">${q.diagram}</div>` : ''}
                     <div class="space-y-3">
                         ${q.options.map((option, optIndex) => `
                             <label class="flex items-center p-3 rounded-lg border-2 border-gray-200 hover:border-blue-400 cursor-pointer transition">
@@ -421,21 +641,155 @@
                 <div class="space-y-3">
                     ${results.map(r => `
                         <div class="p-4 rounded-lg ${r.correct ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'}">
-                            <div class="font-bold mb-2">السؤال ${r.id}: ${r.correct ? '✓ صحيح' : '✗ خطأ'}</div>
+                            <div class="font-bold mb-2">السؤال ${r.id}: ${r.correct ? '✓ صحيح' : ' خطأ'} (${r.marks} درجة)</div>
                             ${!r.correct ? `
                                 <div class="text-sm">
                                     <div>إجابتك: ${r.selectedAnswer}</div>
                                     <div class="text-green-700 font-bold">الإجابة الصحيحة: ${r.correctAnswer}</div>
                                 </div>
                             ` : ''}
-                            <div class="text-sm font-bold mt-2">الدرجة: ${r.marks}</div>
                         </div>
                     `).join('')}
+                </div>
+                <div class="text-center mt-6">
+                    <button id="sendEmailBtn" onclick="sendResultsToEmail()" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:scale-105 transition">
+                        📧 إرسال النتيجة للمعلم
+                    </button>
+                    <p id="emailStatus" class="text-sm mt-2 font-medium"></p>
                 </div>
             `;
 
             document.getElementById('resultsPanel').classList.remove('hidden');
             document.getElementById('resultsPanel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function sendResultsToEmail() {
+            const btn = document.getElementById('sendEmailBtn');
+            const status = document.getElementById('emailStatus');
+            btn.disabled = true;
+            btn.textContent = '⏳ جاري الإرسال...';
+
+            const name = document.getElementById('studentName').value || 'غير محدد';
+            const studentClass = document.getElementById('studentClass').value || 'غير محدد';
+            const date = document.getElementById('examDate').value || new Date().toLocaleDateString();
+            const score = document.getElementById('resultScore').textContent;
+            const percentage = document.getElementById('resultPercentage').textContent;
+
+            let questionsHTML = '';
+            questions.forEach(q => {
+                const selected = document.querySelector(`input[name="q${q.id}"]:checked`);
+                let studentAnswer = 'لم يتم الإجابة';
+                let isCorrect = false;
+                
+                if (selected) {
+                    const selectedIndex = parseInt(selected.value);
+                    studentAnswer = q.options[selectedIndex];
+                    isCorrect = (selectedIndex === q.correct);
+                }
+                
+                const correctAnswer = q.options[q.correct];
+                const rowBg = isCorrect ? '#f0fdf4' : '#fef2f2';
+                const borderLeft = isCorrect ? '4px solid #10b981' : '4px solid #ef4444';
+                
+                questionsHTML += `
+                    <tr style="background: ${rowBg}; border-right: ${borderLeft};">
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center; font-weight: bold; vertical-align: top; width: 35px;">${q.id}</td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; vertical-align: top; width: 35%;">
+                            <strong style="color: #1e40af;"> السؤال:</strong><br>
+                            <span style="color: #374151; font-size: 13px;">${q.question}</span>
+                            ${q.calculation ? `<br><span style="color: #d97706; font-size: 12px; font-style: italic;">${q.calculation}</span>` : ''}
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; vertical-align: top; width: 22%;">
+                            <strong style="color: ${isCorrect ? '#059669' : '#dc2626'};">✍️ إجابة الطالب:</strong><br>
+                            <span style="color: ${isCorrect ? '#059669' : '#dc2626'}; font-size: 13px;">${studentAnswer}</span>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; vertical-align: top; width: 22%;">
+                            <strong style="color: #059669;">✅ الإجابة الصحيحة:</strong><br>
+                            <span style="color: #059669; font-size: 13px;">${correctAnswer}</span>
+                        </td>
+                        <td style="padding: 10px; border: 1px solid #e5e7eb; text-align: center; vertical-align: middle; width: 60px;">
+                            ${isCorrect 
+                                ? '<span style="font-size: 24px;">✅</span><br><span style="color: #059669; font-weight: bold; font-size: 11px;">صحيح</span>' 
+                                : '<span style="font-size: 24px;">❌</span><br><span style="color: #dc2626; font-weight: bold; font-size: 11px;">خطأ</span>'}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const answersHTML = `
+                <div style="font-family: 'Segoe UI', Tahoma, Arial, sans-serif; direction: rtl;">
+                    <div style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                        <h2 style="margin: 0; font-size: 22px;">📐 نتيجة امتحان الفيزياء IGCSE</h2>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9;">Pearson Edexcel International GCSE (9-1)</p>
+                    </div>
+                    <div style="background: #eff6ff; padding: 15px; border: 1px solid #bfdbfe;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px; font-weight: bold; color: #1e40af;">😊 الاسم:</td>
+                                <td style="padding: 8px;">${name}</td>
+                                <td style="padding: 8px; font-weight: bold; color: #1e40af;">🏫 الشعبة:</td>
+                                <td style="padding: 8px;">${studentClass}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; font-weight: bold; color: #1e40af;">📅 التاريخ:</td>
+                                <td style="padding: 8px;">${date}</td>
+                                <td style="padding: 8px; font-weight: bold; color: #1e40af;">🏆 النسبة:</td>
+                                <td style="padding: 8px;">${percentage}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div style="background: white; padding: 20px; text-align: center; border-bottom: 2px solid #e5e7eb;">
+                        <div style="display: inline-block; margin: 0 15px;">
+                            <div style="font-size: 32px; font-weight: bold; color: #2563eb;">${score}</div>
+                            <div style="color: #6b7280; font-size: 13px;">الدرجة الكلية</div>
+                        </div>
+                    </div>
+                    <h3 style="background: #f3f4f6; padding: 12px; margin: 0; color: #1f2937; border-bottom: 2px solid #d1d5db;">
+                        📝 تفاصيل الأسئلة والإجابات الكاملة
+                    </h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: #2563eb; color: white;">
+                                <th style="padding: 10px; border: 1px solid #1e40af; width: 35px;">#</th>
+                                <th style="padding: 10px; border: 1px solid #1e40af; width: 35%;">السؤال</th>
+                                <th style="padding: 10px; border: 1px solid #1e40af; width: 22%;">إجابة الطالب</th>
+                                <th style="padding: 10px; border: 1px solid #1e40af; width: 22%;">الإجابة الصحيحة</th>
+                                <th style="padding: 10px; border: 1px solid #1e40af; width: 60px;">النتيجة</th>
+                            </tr>
+                        </thead>
+                        <tbody>${questionsHTML}</tbody>
+                    </table>
+                    <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); padding: 15px; border-radius: 0 0 10px 10px; border-top: 2px solid #2563eb;">
+                        <p style="margin: 0; color: #1e40af; text-align: center; font-size: 13px;">
+                            📐 <strong>أحسنت يا بطل! استمر في إتقان الفيزياء!</strong> 📐
+                        </p>
+                        <p style="margin: 5px 0 0 0; color: #1e40af; text-align: center; font-size: 12px;">
+                            تم إرسال هذا التقرير تلقائياً | Mr. Mohammed Hesham
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            emailjs.send("service_w15m64i", "template_5b0u2tq", {
+                to_email: "mohammedhesham872@gmail.com",
+                student_name: name,
+                student_class: studentClass,
+                exam_date: date,
+                total_score: score,
+                success_rate: percentage,
+                grade: percentage,
+                answers_table: answersHTML
+            }).then(() => {
+                status.textContent = '✅ تم إرسال نتيجتك للمعلم بنجاح!';
+                status.style.color = '#059669';
+                btn.textContent = '✓ تم الإرسال';
+            }).catch(err => {
+                status.textContent = '❌ حدث خطأ، حاول مرة أخرى';
+                status.style.color = '#dc2626';
+                btn.disabled = false;
+                btn.textContent = '📧 أرسل النتيجة للمعلم';
+                console.error('EmailJS Error:', err);
+            });
         }
 
         // Initialize
